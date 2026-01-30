@@ -1,0 +1,129 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>PMIリアルタイム共有</title>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.2em;
+    }
+    .input-area {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    select, input, button {
+      font-size: 1.4em;
+      padding: 8px;
+      margin: 5px;
+    }
+    .columns {
+      display: flex;
+      gap: 15px;
+    }
+    .column {
+      flex: 1;
+      background: white;
+      padding: 10px;
+      border-radius: 10px;
+    }
+    .column h2 {
+      text-align: center;
+      font-size: 1.8em;
+    }
+    .item {
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 1.4em;
+    }
+    .P { background: #d0f0ff; }
+    .M { background: #ffe0e0; }
+    .I { background: #e0ffe0; }
+  </style>
+</head>
+
+<body>
+  <h1>PMIチャート（リアルタイム）</h1>
+
+  <div class="input-area">
+    <select id="type">
+      <option value="P">P（よい点）</option>
+      <option value="M">M（気になる点）</option>
+      <option value="I">I（改善案）</option>
+    </select>
+    <input id="text" placeholder="意見を入力">
+    <button onclick="send()">送信</button>
+  </div>
+
+  <div class="columns">
+    <div class="column">
+      <h2>P</h2>
+      <div id="P"></div>
+    </div>
+    <div class="column">
+      <h2>M</h2>
+      <div id="M"></div>
+    </div>
+    <div class="column">
+      <h2>I</h2>
+      <div id="I"></div>
+    </div>
+  </div>
+
+  <script>
+    // Firebase設定
+    const firebaseConfig = {
+      apiKey: "AIzaSyAIJoXVyftKaFa706rYYT7FrKjpyy20hPU",
+      authDomain: "pmi-class.firebaseapp.com",
+      projectId: "pmi-class",
+      storageBucket: "pmi-class.firebasestorage.app",
+      messagingSenderId: "646376646830",
+      appId: "1:646376646830:web:04f5bde5270d9da951653f",
+      measurementId: "G-XV1N0EEKGK"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // 送信
+    function send() {
+      const type = document.getElementById("type").value;
+      const text = document.getElementById("text").value.trim();
+      if (!text) return;
+
+      db.collection("pmi").add({
+        type: type,
+        text: text,
+        time: new Date()
+      });
+
+      document.getElementById("text").value = "";
+    }
+
+    // リアルタイム表示
+    db.collection("pmi").orderBy("time")
+      .onSnapshot(snapshot => {
+        ["P","M","I"].forEach(t => document.getElementById(t).innerHTML = "");
+        snapshot.forEach(doc => {
+          const d = doc.data();
+          const div = document.createElement("div");
+          div.className = "item " + d.type;
+          div.textContent = d.text;
+          document.getElementById(d.type).appendChild(div);
+        });
+      });
+  </script>
+</body>
+</html>
